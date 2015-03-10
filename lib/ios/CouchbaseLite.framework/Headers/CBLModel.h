@@ -8,9 +8,11 @@
 
 #import "MYDynamicObject.h"
 #import "CBLDocument.h"
-@class CBLAttachment, CBLDatabase, CBLDocument;
+
+@class CBLAttachment, CBLDatabase;
 
 
+NS_REQUIRES_PROPERTY_DEFINITIONS  // Don't let compiler auto-synthesize properties in subclasses
 /** Generic model class for CouchbaseLite documents.
     There's a 1::1 mapping between these and CBLDocuments; call +modelForDocument: to get (or create) a model object for a document, and .document to get the document of a model.
     You should subclass this and declare properties in the subclass's @@interface. As with NSManagedObject, you don't need to implement their accessor methods or declare instance variables; simply note them as '@@dynamic' in the class @@implementation. The property value will automatically be fetched from or stored to the document, using the same name.
@@ -142,7 +144,11 @@
 
 /** Designated initializer. Do not call directly except from subclass initializers; to create a new instance call +modelForDocument: instead.
     @param document  The document. Nil if this is created new (-init was called). */
-- (instancetype) initWithDocument: (CBLDocument*)document;
+- (instancetype) initWithDocument: (CBLDocument*)document
+#ifdef NS_DESIGNATED_INITIALIZER
+NS_DESIGNATED_INITIALIZER
+#endif
+;
 
 /** The document ID to use when creating a new document.
     Default is nil, which means to assign no ID (the server will assign one). */
@@ -181,6 +187,11 @@
     In general you'll find it easier to implement the '+propertyItemClass' method(s) rather
     than overriding this one. */
 + (Class) itemClassForArrayProperty: (NSString*)property;
+
+/** The type of document. This is optional, but is commonly used in document databases 
+    to distinguish different types of documents. CBLModelFactory can use this property to 
+    determine what CBLModel subclass to instantiate for a document. */
+@property (copy, nonatomic) NSString* type;
 
 @end
 

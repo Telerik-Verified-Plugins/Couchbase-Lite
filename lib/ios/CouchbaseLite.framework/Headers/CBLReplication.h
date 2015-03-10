@@ -12,12 +12,12 @@
 
 
 /** Describes the current status of a replication. */
-typedef enum {
+typedef NS_ENUM(unsigned, CBLReplicationStatus) {
     kCBLReplicationStopped, /**< The replication is finished or hit a fatal error. */
     kCBLReplicationOffline, /**< The remote host is currently unreachable. */
     kCBLReplicationIdle,    /**< Continuous replication is caught up and waiting for more changes.*/
     kCBLReplicationActive   /**< The replication is actively transferring data. */
-} CBLReplicationStatus;
+} ;
 
 
 /** A 'push' or 'pull' replication between a local and a remote database.
@@ -83,11 +83,11 @@ typedef enum {
 /** An object that knows how to authenticate with a remote server.
     CBLAuthenticator is an opaque protocol; instances can be created by calling the factory methods
     of the class of the same name. */
-@property id<CBLAuthenticator> authenticator;
+@property (strong) id<CBLAuthenticator> authenticator;
 
 /** The credential (generally username+password) to use to authenticate to the remote database.
     This can either come from the URL itself (if it's of the form "http://user:pass@example.com")
-    or be stored in the NSURLCredentialStore, which is a wrapper around the Keychain. */
+    or be stored in the NSURLCredentialStorage, which is a wrapper around the Keychain. */
 @property (nonatomic, strong) NSURLCredential* credential;
 
 /** OAuth parameters that the replicator should use when authenticating to the remote database.
@@ -125,6 +125,10 @@ typedef enum {
         root certs; if YES, it replaces them (so *only* the given certs will be trusted.) */
 + (void) setAnchorCerts: (NSArray*)certs onlyThese: (BOOL)onlyThese;
 
+/** The server's SSL certificate. This will be NULL until the first HTTPS response is received
+    from the server. */
+@property (readonly) SecCertificateRef serverCertificate;
+
 #pragma mark - STATUS:
 
 /** Starts the replication, asynchronously.
@@ -140,6 +144,13 @@ typedef enum {
 /** Restarts a running replication.
     Has no effect if the replication is not running. */
 - (void) restart;
+
+/** Suspends/resumes a replication.
+    On iOS a replication will suspend itself when the app goes into the background, and resume
+    when the app is re-activated. If your app receives a push notification while suspended and needs
+    to run the replication to download new data, your handler should set suspended to NO to resume
+    replication, and then set the property back to YES when it's done. */
+@property BOOL suspended;
 
 /** The replication's current state, one of {stopped, offline, idle, active}. */
 @property (nonatomic, readonly) CBLReplicationStatus status;
